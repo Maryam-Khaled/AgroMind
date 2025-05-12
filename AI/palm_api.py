@@ -21,7 +21,10 @@ def palm_chat():
     data = request.json
     prompt = data.get('prompt', '')
     model = palm.GenerativeModel(
-        'gemini-1.5-flash-latest')  # Changed model name
+        model_name='gemini-1.5-flash-latest',  # Explicitly set model_name
+        system_instruction="You are a witty and humorous AI assistant. Your responses should be clever and entertaining, but still helpful.",
+        generation_config={'temperature': 0.75}  # Temperature for witty/creative responses
+    )
     response = model.generate_content(prompt)
     return jsonify({'response': response.text})
 

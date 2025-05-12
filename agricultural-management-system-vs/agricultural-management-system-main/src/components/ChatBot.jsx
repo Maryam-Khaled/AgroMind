@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Resizable } from 're-resizable';
-import EditIcon from '../assets/images/edit.png'; // Import the icon
+import SendIcon from '../assets/images/paper-aeroplane.png'; // Import the send icon
+import ChatIcon from '../assets/images/chat2.png'; // Updated to chat2.png
 
 function ChatBot() {
     const [open, setOpen] = useState(false);
@@ -23,11 +24,8 @@ function ChatBot() {
 
     const handleEdit = (index) => {
         const messageToEdit = messages[index];
-        // Ensure we are editing a text-only message
         if (messageToEdit && typeof messageToEdit.user === 'string' && !messageToEdit.image) {
             setEditingMessageId(index);
-            // messageToEdit.user is the raw text content.
-            // Prefixes like "You:" are added during rendering.
             setEditingText(messageToEdit.user);
             setInput(messageToEdit.user);
         }
@@ -40,33 +38,30 @@ function ChatBot() {
     };
 
     const sendMessage = async () => {
-        if (editingMessageId !== null) { // Edit path
+        if (editingMessageId !== null) {
             const messageIndexToUpdate = editingMessageId;
             const newTextForUserDisplay = input.trim();
 
             if (!newTextForUserDisplay) {
-                cancelEdit(); // Cancel if the edited message is empty
+                cancelEdit();
                 return;
             }
 
-            // Update the user's text and set bot response to loading
             setMessages(prevMessages =>
                 prevMessages.map((msg, index) => {
                     if (index === messageIndexToUpdate) {
-                        return { ...msg, user: newTextForUserDisplay, bot: "..." }; // Update user text, bot to loading
+                        return { ...msg, user: newTextForUserDisplay, bot: "..." };
                     }
                     return msg;
                 })
             );
             setShowSpinner(true);
 
-            // Clear editing state after capturing input and updating UI optimistically
             setEditingMessageId(null);
             setEditingText("");
             setInput("");
 
             try {
-                // API call for edited text (assuming palm-chat for text messages)
                 const res = await fetch("http://localhost:5005/palm-chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -77,11 +72,10 @@ function ChatBot() {
                 const data = await res.json();
                 const botResponse = data.response;
 
-                // Update the specific message with the new bot response
                 setMessages(prevMessages =>
                     prevMessages.map((msg, index) => {
                         if (index === messageIndexToUpdate) {
-                            return { ...msg, bot: botResponse }; // Only update bot response here
+                            return { ...msg, bot: botResponse };
                         }
                         return msg;
                     })
@@ -98,10 +92,9 @@ function ChatBot() {
             } finally {
                 setShowSpinner(false);
             }
-            return; // Crucial: stop execution for edit path
+            return;
         }
 
-        // --- Original logic for sending a NEW message ---
         if ((!input.trim() && !image) || (image && !plant.trim())) return;
         let userMsgText = input.trim();
         let userDisplayMsg = userMsgText + (image ? `\n[Image uploaded for ${plant}]` : "");
@@ -184,83 +177,122 @@ function ChatBot() {
                     right: 24,
                     zIndex: 1000,
                     borderRadius: "50%",
-                    width: 56,
-                    height: 56,
-                    background: "#1976d2",
-                    color: "#fff",
+                    width: 70,
+                    height: 70,
+                    background: "#4CAF50",
                     border: "none",
-                    fontSize: 28,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                    cursor: "pointer"
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.3s ease-in-out",
+                    padding: 0
+                }}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.boxShadow = "0 8px 16px rgba(0,0,0,0.2)";
+                    e.currentTarget.style.transform = "scale(1.05) translateY(-2px)";
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                    e.currentTarget.style.transform = "scale(1) translateY(0)"; // Corrected: removed semicolon from string
                 }}
                 aria-label="Open chat"
             >
-                💬
+                <img src={ChatIcon} alt="Open chat" style={{ width: '50px', height: '50px' }} /> {/* Increased icon size */}
             </button>
             {open && (
                 <Resizable
-                    defaultSize={{ width: 500, height: 600 }}
-                    minWidth={320}
-                    minHeight={320}
-                    maxWidth="90vw"
-                    maxHeight="90vh"
+                    defaultSize={{ width: 420, height: 650 }}
+                    minWidth={300}
+                    minHeight={400}
+                    maxWidth="calc(100vw - 40px)"
+                    maxHeight="calc(100vh - 40px)"
                     style={{
                         position: "fixed",
-                        top: "50%",
-                        right: 40,
-                        transform: "translateY(-50%)",
+                        bottom: 108, // Changed from 110px
+                        right: 24,
                         zIndex: 1000,
                         display: "flex",
-                        flexDirection: "column"
+                        flexDirection: "column",
+                        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
                     }}
                 >
                     <div
                         style={{
                             width: "100%",
                             height: "100%",
-                            background: "#fff",
-                            borderRadius: 12,
-                            boxShadow: "0 4px 32px rgba(0,0,0,0.3)",
+                            background: "#f9f9f9",
+                            borderRadius: 16,
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
                             display: "flex",
                             flexDirection: "column",
-                            fontSize: 18,
+                            fontSize: 16,
                             minWidth: 0,
-                            minHeight: 0
+                            minHeight: 0,
+                            overflow: "hidden"
                         }}
                     >
-                        <div style={{ padding: 18, borderBottom: "1px solid #eee", background: "#1976d2", color: "#fff", borderTopLeftRadius: 12, borderTopRightRadius: 12, fontSize: 22 }}>
-                            AgroMind Chatbot
-                            <button onClick={() => setOpen(false)} style={{ float: "right", background: "none", border: "none", color: "#fff", fontSize: 24, cursor: "pointer" }}>×</button>
+                        <div style={{
+                            padding: "16px 20px",
+                            borderBottom: "1px solid #e0e0e0",
+                            background: "#ffffff",
+                            color: "#4CAF50", // Fallback color
+                            borderTopLeftRadius: 16,
+                            borderTopRightRadius: 16,
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center"
+                        }}>
+                            <span style={{
+                                background: "linear-gradient(to right, #4CAF50, #2E7D32)", // Green gradient
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                                fontWeight: 900,
+                                fontSize: '26px', // Changed font size to 26px
+                                fontFamily: "'Righteous', sans-serif"
+                            }}>
+                                AgroMind Chatbot
+                            </span>
+                            <button onClick={() => setOpen(false)} style={{
+                                background: "none",
+                                border: "none",
+                                color: "#888",
+                                fontSize: 28,
+                                cursor: "pointer",
+                                padding: "0 4px"
+                            }}>×</button>
                         </div>
-                        <div style={{ flex: 1, overflowY: "auto", padding: 18 }}>
+                        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
                             {messages.map((msg, i) => (
-                                <div key={msg.id || i} style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div key={msg.id || i} style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     {msg.user && (
                                         <div
                                             style={{
                                                 display: 'flex',
                                                 flexDirection: 'column',
                                                 alignItems: 'flex-end',
-                                                gap: '4px'
+                                                gap: '6px'
                                             }}
                                             onMouseEnter={() => msg.id && setHoveredMessageId(msg.id)}
                                             onMouseLeave={() => setHoveredMessageId(null)}
                                         >
                                             <div style={{
-                                                background: '#f0f0f0',
-                                                padding: '8px 12px',
-                                                borderRadius: '15px',
-                                                borderTopRightRadius: '5px',
-                                                maxWidth: '70%',
-                                                boxShadow: '0 1px 1px rgba(0,0,0,0.05)',
+                                                background: '#DCF8C6',
+                                                color: '#333',
+                                                padding: '10px 14px',
+                                                borderRadius: '20px',
+                                                borderTopRightRadius: '8px',
+                                                maxWidth: '75%',
+                                                boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
                                                 whiteSpace: 'pre-wrap',
                                                 wordWrap: 'break-word',
                                                 position: 'relative'
                                             }}>
-                                                <b>You:</b> {msg.user}
+                                                {msg.user}
                                                 {msg.image && (
-                                                    <div style={{ marginTop: '8px' }}>
-                                                        <img src={msg.image} alt="Uploaded" style={{ display: 'block', maxWidth: 180, maxHeight: 180, borderRadius: 8, border: '1px solid #ccc' }} />
+                                                    <div style={{ marginTop: '10px' }}>
+                                                        <img src={msg.image} alt="Uploaded" style={{ display: 'block', maxWidth: 180, maxHeight: 180, borderRadius: 12, border: '1px solid #ccc' }} />
                                                     </div>
                                                 )}
                                             </div>
@@ -287,16 +319,17 @@ function ChatBot() {
                                         <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                                             <div style={{
                                                 background: '#ffffff',
-                                                border: '1px solid #e0e0e0',
-                                                padding: '8px 12px',
-                                                borderRadius: '15px',
-                                                borderTopLeftRadius: '5px',
+                                                border: '1px solid #e9e9eb',
+                                                color: '#333',
+                                                padding: '10px 14px',
+                                                borderRadius: '20px',
+                                                borderTopLeftRadius: '8px',
                                                 maxWidth: '75%',
-                                                boxShadow: '0 1px 1px rgba(0,0,0,0.05)',
+                                                boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
                                                 whiteSpace: 'pre-wrap',
                                                 wordWrap: 'break-word'
                                             }}>
-                                                <b>Bot:</b> {msg.bot}
+                                                {msg.bot}
                                             </div>
                                         </div>
                                     )}
@@ -305,26 +338,26 @@ function ChatBot() {
                             {showSpinner && (
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '24px 0' }}>
                                     <div style={{
-                                        border: '4px solid #f3f3f3',
-                                        borderTop: '4px solid #1976d2',
+                                        border: '4px solid #e0e0e0',
+                                        borderTop: '4px solid #25D366',
                                         borderRadius: '50%',
-                                        width: 36,
-                                        height: 36,
+                                        width: 32,
+                                        height: 32,
                                         animation: 'spin 1s linear infinite'
                                     }} />
                                     <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-                                    <span style={{ marginLeft: 12, color: '#1976d2', fontWeight: 500 }}>Analyzing...</span>
+                                    <span style={{ marginLeft: 12, color: '#555', fontWeight: 500 }}>Analyzing...</span>
                                 </div>
                             )}
                         </div>
-                        <div style={{ display: "flex", borderTop: "1px solid #eee", padding: 14, alignItems: "center" }}>
+                        <div style={{ display: "flex", borderTop: "1px solid #e0e0e0", padding: 12, alignItems: "center", background: "#ffffff", borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
                             {image && (
                                 <input
                                     type="text"
                                     value={plant}
                                     onChange={(e) => setPlant(e.target.value)}
                                     placeholder="Enter plant name (e.g., Corn)"
-                                    style={{ flex: 1, padding: 12, border: "1px solid #ddd", borderRadius: 8, marginRight: 8, fontSize: 16 }}
+                                    style={{ flex: 1, padding: 10, border: "1px solid #ccc", borderRadius: 20, marginRight: 8, fontSize: 15 }}
                                 />
                             )}
 
@@ -332,9 +365,10 @@ function ChatBot() {
                                 flex: 1,
                                 display: 'flex',
                                 alignItems: 'center',
-                                border: '1px solid #ddd',
-                                borderRadius: 8,
+                                border: '1px solid #ccc',
+                                borderRadius: 20,
                                 marginRight: 8,
+                                background: '#fff'
                             }}>
                                 <input
                                     type="file"
@@ -347,29 +381,29 @@ function ChatBot() {
                                     htmlFor="imageUpload"
                                     title="Upload image"
                                     style={{
-                                        padding: '12px',
+                                        padding: '10px',
                                         cursor: 'pointer',
-                                        fontSize: '20px',
-                                        color: '#757575',
-                                        borderRight: '1px solid #ddd',
+                                        fontSize: '22px',
+                                        color: '#555',
+                                        borderRight: '1px solid #ccc',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                     }}
                                 >
-                                    +
+                                    📎
                                 </label>
                                 <input
                                     type="text"
                                     value={input}
                                     onChange={handleInputChange}
-                                    placeholder={editingMessageId !== null ? "Edit your message..." : "Type a message or click + to add image..."}
+                                    placeholder={editingMessageId !== null ? "Edit your message..." : "Type a message..."}
                                     style={{
                                         flex: 1,
-                                        padding: '12px',
+                                        padding: '10px 12px',
                                         border: 'none',
-                                        borderRadius: '0 7px 7px 0',
-                                        fontSize: 16,
+                                        borderRadius: '0 19px 19px 0',
+                                        fontSize: 15,
                                         outline: 'none',
                                     }}
                                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
@@ -377,15 +411,28 @@ function ChatBot() {
                             </div>
 
                             {imagePreview && (
-                                <button onClick={handleRemoveImage} style={{ padding: '10px', background: '#ef5350', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', marginRight: 8, fontSize: 16 }}>
+                                <button onClick={handleRemoveImage} style={{ padding: '10px 12px', background: '#ff5252', color: '#fff', border: 'none', borderRadius: 20, cursor: 'pointer', marginRight: 8, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     🗑️
                                 </button>
                             )}
-                            <button onClick={sendMessage} style={{ padding: 12, background: editingMessageId !== null ? "#4caf50" : "#1976d2", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 16 }}>
-                                {editingMessageId !== null ? "Update" : "Send"}
+                            <button onClick={sendMessage} style={{ padding: "8px 12px", background: editingMessageId !== null ? "#4caf50" : "#25D366", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", transition: "background-color 0.3s ease", display: "flex", alignItems: "center", justifyContent: "center", width: "40px", height: "40px" }}
+                                onMouseOver={(e) => e.currentTarget.style.background = editingMessageId !== null ? "#388e3c" : "#1DAA54"}
+                                onMouseOut={(e) => e.currentTarget.style.background = editingMessageId !== null ? "#4caf50" : "#25D366"}
+                                title={editingMessageId !== null ? "Update" : "Send"}
+                            >
+                                {editingMessageId !== null ? (
+                                    <>
+                                        <span style={{ fontSize: '18px' }}>✓</span>
+                                    </>
+                                ) : (
+                                    <img src={SendIcon} alt="Send" style={{ width: '20px', height: '20px' }} />
+                                )}
                             </button>
                             {editingMessageId !== null && (
-                                <button onClick={cancelEdit} style={{ marginLeft: '8px', padding: 12, background: '#757575', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 16 }}>
+                                <button onClick={cancelEdit} style={{ marginLeft: '8px', padding: "10px 16px", background: '#9e9e9e', color: '#fff', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 15, fontWeight: 500, transition: "background-color 0.3s ease" }}
+                                    onMouseOver={(e) => e.currentTarget.style.background = "#757575"}
+                                    onMouseOut={(e) => e.currentTarget.style.background = "#9e9e9e"}
+                                >
                                     Cancel
                                 </button>
                             )}
